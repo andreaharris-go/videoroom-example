@@ -1,0 +1,14 @@
+**/node_modules/*
+**/out/*
+**/.next/*
+**/build/*
+**/assets/*
+**/common/*
+**/components/*
+**/contexts/*
+**/models/*
+**/public/*
+**/redux/*
+**/styles/*
+**/sys/*
+**/utils/*
