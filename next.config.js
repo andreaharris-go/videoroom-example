@@ -4,6 +4,7 @@ const nextConfig = {
   distDir: 'build',
   env: {
     APP_DOMAIN: process.env.APP_DOMAIN,
+    JANUS_DEFAULT_SERVER: process.env.JANUS_DEFAULT_SERVER,
     FIREBASE_APP_ID: process.env.FIREBASE_APP_ID,
     FIREBASE_API_KEY: process.env.FIREBASE_API_KEY,
     FIREBASE_AUTH_DOMAIN: process.env.FIREBASE_AUTH_DOMAIN,
