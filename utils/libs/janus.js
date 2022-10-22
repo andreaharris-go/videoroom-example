@@ -4,24 +4,27 @@ Janus.sessions = {};
 
 Janus.isExtensionEnabled = function() {
   if(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+    // No need for the extension, getDisplayMedia is supported
     return true;
   }
   if(window.navigator.userAgent.match('Chrome')) {
-    let chromeVersion = parseInt(window.navigator.userAgent.match(/Chrome\/(.*) /)[1], 10);
-    let maxVersion = 33;
+    let chromever = parseInt(window.navigator.userAgent.match(/Chrome\/(.*) /)[1], 10);
+    let maxver = 33;
     if(window.navigator.userAgent.match('Linux'))
-      maxVersion = 35;
-    if(chromeVersion >= 26 && chromeVersion <= maxVersion) {
+      maxver = 35;	// "known" crash in chrome 34 and 35 on linux
+    if(chromever >= 26 && chromever <= maxver) {
+      // Older versions of Chrome don't support this extension-based approach, so lie
       return true;
     }
     return Janus.extension.isInstalled();
   } else {
+    // Firefox and others, no need for the extension (but this doesn't mean it will work)
     return true;
   }
 };
 
 var defaultExtension = {
-  // Screen sharing Chrome Extension ID
+  // Screensharing Chrome Extension ID
   extensionId: 'hapfgfdkleiggjjpfpenajgdnfckjpaj',
   isInstalled: function() { return document.querySelector('#janus-extension-installed') !== null; },
   getScreen: function (callback) {
@@ -91,6 +94,11 @@ Janus.useDefaultDependencies = function (deps) {
         return p.reject({message: 'Probably a network error, is the server down?', error: error});
       });
 
+      /*
+       * fetch() does not natively support timeouts.
+       * Work around this by starting a timeout manually, and racing it agains the fetch() to see which thing resolves first.
+       */
+
       if(options.timeout) {
         let timeout = new p(function(resolve, reject) {
           let timerId = setTimeout(function() {
@@ -127,6 +135,43 @@ Janus.useDefaultDependencies = function (deps) {
       return fetching;
     }
   }
+};
+
+Janus.useOldDependencies = function (deps) {
+  let jq = (deps && deps.jQuery) || jQuery;
+  let socketCls = (deps && deps.WebSocket) || WebSocket;
+  return {
+    newWebSocket: function(server, proto) { return new socketCls(server, proto); },
+    isArray: function(arr) { return jq.isArray(arr); },
+    extension: (deps && deps.extension) || defaultExtension,
+    webRTCAdapter: (deps && deps.adapter) || adapter,
+    httpAPICall: function(url, options) {
+      let payload = (typeof options.body !== 'undefined') ? {
+        contentType: 'application/json',
+        data: JSON.stringify(options.body)
+      } : {};
+      let credentials = (typeof options.withCredentials !== 'undefined') ? {xhrFields: {withCredentials: options.withCredentials}} : {};
+
+      return jq.ajax(jq.extend(payload, credentials, {
+        url: url,
+        type: options.verb,
+        cache: false,
+        dataType: 'json',
+        async: options.async,
+        timeout: options.timeout,
+        success: function(result) {
+          if(typeof(options.success) === typeof(Janus.noop)) {
+            options.success(result);
+          }
+        },
+        error: function(xhr, status, err) {
+          if(typeof(options.error) === typeof(Janus.noop)) {
+            options.error(status, err);
+          }
+        }
+      }));
+    }
+  };
 };
 
 // Helper function to convert a deprecated media object to a tracks array
@@ -951,6 +996,10 @@ function Janus(gatewayCallbacks) {
         },
 
         'message': function(event) {
+          // if (sessionId === null) {
+          //   const tmpData = JSON.parse(event.data)
+          //   sessionId = tmpData?.data?.id
+          // }
           handleEvent(JSON.parse(event.data));
         },
 
