@@ -2017,7 +2017,7 @@ function Janus(gatewayCallbacks) {
         callbacks.success(offer);
       } else {
         await config.pc.setRemoteDescription(jsep);
-        Janus.log("Remote description accepted!");
+        Janus.log("Remote description accepted! XXX");
         config.remoteSdp = jsep.sdp;
         // Any trickle candidate we cached?
         if(config.candidates && config.candidates.length > 0) {
@@ -2068,7 +2068,7 @@ function Janus(gatewayCallbacks) {
       callbacks.customizeSdp(jsep);
       config.pc.setRemoteDescription(jsep)
         .then(function() {
-          Janus.log("Remote description accepted!");
+          Janus.log("Remote description accepted! YYY");
           config.remoteSdp = jsep.sdp;
           // Any trickle candidate we cached?
           if(config.candidates && config.candidates.length > 0) {
@@ -2085,6 +2085,7 @@ function Janus(gatewayCallbacks) {
             }
             config.candidates = [];
           }
+
           // Done
           callbacks.success();
         }, callbacks.error);
