@@ -1,7 +1,5 @@
 import Layout2 from "@/components/pages/video/layout2";
 const Janus = require('../utils/libs/janus')
-import {useEffect, useState} from "react";
-import adapter from "webrtc-adapter";
 
 export async function getServerSideProps() {
   return {

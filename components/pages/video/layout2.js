@@ -1,7 +1,6 @@
 import {useEffect, useState} from "react";
 import Janus from "@/utils/libs/janus";
 import adapter from "webrtc-adapter";
-import VideoPlayer from "@/components/common/videoPlayer";
 import VideoMainView from "@/components/pages/video/videoMainView";
 import VideoSubView from "@/components/pages/video/videoSubView";
 
@@ -72,7 +71,7 @@ export default function Layout2({servers}) {
   }, [])
 
   const [ subSources, subSourcesSet ] = useState([])
-  const [ mypvtidState, mypvtidStateSet ] = useState(null)
+  const [ myPvtIdState, myPvtIdStateSet ] = useState(null)
 
   return (
     <>
@@ -80,15 +79,14 @@ export default function Layout2({servers}) {
         <div className="col-span-5 h-screen">
           <div className=" overflow-hidden rounded-xl max-h-[42rem]">
             <VideoMainView janusConnect={janusConnect} subscribeTo={(source, mypvtid) => {
-              console.log("XXX GET FROM SOURCE",mypvtid, source)
               subSourcesSet(source)
-              mypvtidStateSet(mypvtid)
+              myPvtIdStateSet(mypvtid)
             }} />
           </div>
         </div>
         <div className="col-span-1 h-screen space-y-2">
           <div className=" overflow-hidden rounded-xl max-h-[10rem]">
-            <VideoSubView janusConnect={janusConnect} sources={subSources} mypvtid={mypvtidState} />
+            <VideoSubView janusConnect={janusConnect} sources={subSources} myPvtId={myPvtIdState} />
           </div>
           <div className=" overflow-hidden rounded-xl max-h-[10rem]">
             <img className="h-full w-full object-cover "
