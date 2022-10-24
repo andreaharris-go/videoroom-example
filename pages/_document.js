@@ -13,7 +13,7 @@ export default function Document() {
           rel="stylesheet"
         />
       </Head>
-      <body className="bg-[conic-gradient(at_top_right,_var(--tw-gradient-stops))] from-gray-700 via-gray-900 to-black">
+      <body className="bg-gradient-to-r from-rose-100 to-teal-100 p-4">
         <Main/>
         <NextScript/>
       </body>

@@ -1,23 +1,20 @@
-import VideoPlayer from "@/components/common/videoPlayer";
 import {useEffect, useState} from "react";
 import Janus from "@/utils/libs/janus";
 import getQueryStringValue from "@/utils/common/getQueryStringValue";
+import DisplaySubViewVideo from "@/components/pages/video/displaySubViewvideo";
 
-export default function VideoSubView({janusConnect, sources, myPvtId}) {
+export default function MainLayoutSubItem({janusConnect, sources, myPvtId}) {
   const [ initState, initStateSet ] = useState(true)
   const [ mediaState, mediaStateSet ] = useState(null)
   const [ videoTracksState, videoTracksStateSet ] = useState([])
   const opaqueId = "videoRoomTest-"+Janus.randomString(12);
   const appDomain = process.env.APP_DOMAIN;
-  let videoTracks = []
-
-  const DisplaySubViewVideo = (streams) => {
-    console.log('XXXX', streams)
-  }
+  const [ videoTracks, videoTracksSet ] = useState([])
+  const [ removeStateUpdate, removeStateUpdateSet ] = useState(0)
 
   useEffect(() => {
-    console.log(videoTracksState)
-  }, [videoTracksState])
+    console.log('YYY', videoTracksState, videoTracks)
+  }, [removeStateUpdate])
 
   useEffect(() => {
     let myRoom = 1234; // Demo room
@@ -27,6 +24,7 @@ export default function VideoSubView({janusConnect, sources, myPvtId}) {
     let bitrateTimer = [], simulcastStarted = {};
     let use_msid = (getQueryStringValue("msid", appDomain) === "yes" || getQueryStringValue("msid", appDomain) === "true");
     let creatingSubscription = false;
+    let videoMid = [];
 
     if (janusConnect !== null && initState && mediaState === null && sources.length > 0) {
       initStateSet(false)
@@ -197,6 +195,11 @@ export default function VideoSubView({janusConnect, sources, myPvtId}) {
             /**
              * Which publisher are we getting on this mid?
              */
+            // console.log('ON REMOTE TRACK', mid, track);
+            const ownTrack = {
+              mid: mid,
+              track: track
+            }
             let sub = subStreams[mid];
             let feed = feedStreams[sub.feed_id];
             let stream = null
@@ -229,6 +232,7 @@ export default function VideoSubView({janusConnect, sources, myPvtId}) {
             }
 
             if (track.kind === "audio") {
+              // console.log('AUDIO', mid, track)
               stream = new MediaStream([track]);
               remoteTracks[mid] = stream;
               // TODO add media remote
@@ -236,21 +240,23 @@ export default function VideoSubView({janusConnect, sources, myPvtId}) {
                 // No video, at least for now: show a placeholder
               }
             } else {
-              feed.remoteVideos++;
-              console.log(feed)
-              stream = new MediaStream([track]);
-              remoteTracks[mid] = stream;
-              mediaStateSet(stream)
+              if (!videoMid.includes(ownTrack.mid)) {
+                videoMid.push(ownTrack.mid)
+                feed.remoteVideos++;
+                stream = new MediaStream([ownTrack.track]);
+                remoteTracks[mid] = stream;
+                console.log('OWN TRACK', ownTrack)
 
-              console.log('MID', feedStreams, subStreams, subscriptions)
-              console.log(remoteFeed)
-              videoTracks.push(stream);
-              videoTracksStateSet([...videoTracksState, stream])
+                mediaStateSet(stream)
+                videoTracks.push(stream);
+                videoTracksStateSet([...videoTracksState, ...stream])
+                removeStateUpdateSet(removeStateUpdate + 1)
 
-              if (!bitrateTimer[slot]) {
-                bitrateTimer[slot] = setInterval(function() {
-                  // Display updated bitrate, if supported
-                }, 1000);
+                if (!bitrateTimer[slot]) {
+                  bitrateTimer[slot] = setInterval(function() {
+                    // Display updated bitrate, if supported
+                  }, 1000);
+                }
               }
             }
           },
@@ -271,8 +277,5 @@ export default function VideoSubView({janusConnect, sources, myPvtId}) {
     }
   }, [sources])
 
-  if (mediaStateSet) {
-    return <VideoPlayer cssClass="w-full h-full object-cover" srcObject={mediaState} />
-  }
-
+  return <DisplaySubViewVideo videoTracks={videoTracks} removeStateUpdate={removeStateUpdate} />
 }

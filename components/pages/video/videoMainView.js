@@ -5,24 +5,26 @@ import publishOwnFeed from "@/utils/libs/jaFunc/publishOwnFeed";
 import getQueryStringValue from "@/utils/common/getQueryStringValue";
 import escapeXmlTags from "@/utils/common/escapeXmlTags";
 
-export default function VideoMainView({janusConnect, subscribeTo}) {
+export default function VideoMainView({janusConnect, subscribeTo, emitInfo = () => {}}) {
   const [ initState, initStateSet ] = useState(true)
   const [ mediaState, mediaStateSet ] = useState(null)
+  const [ myInfoState, myInfoStateSet ] = useState({})
   const opaqueId = "videoRoomTest-"+Janus.randomString(12);
   const username = 'S1_yohk'
   const appDomain = process.env.APP_DOMAIN;
-  let sfuTest = null;
-  let myId = null;
-  let myUsername = null;
-  let myStream = null;
-  let myPvtId = null;
-  let myRoom = 1234; // Demo room
-  let feedStreams = {};
-  let localTracks = {}, localVideos = 0;
-  let acodec = (getQueryStringValue("acodec", appDomain) !== "" ? getQueryStringValue("acodec", appDomain) : null);
-  let vcodec = (getQueryStringValue("vcodec", appDomain) !== "" ? getQueryStringValue("vcodec", appDomain) : null);
 
   useEffect(() => {
+    let sfuTest = null;
+    let myId = null;
+    let myUsername = null;
+    let myStream = null;
+    let myPvtId = null;
+    let myRoom = 1234; // Demo room
+    let feedStreams = {};
+    let localTracks = {}, localVideos = 0;
+    let acodec = (getQueryStringValue("acodec", appDomain) !== "" ? getQueryStringValue("acodec", appDomain) : null);
+    let vcodec = (getQueryStringValue("vcodec", appDomain) !== "" ? getQueryStringValue("vcodec", appDomain) : null);
+
     if (janusConnect !== null && initState && mediaState === null) {
       initStateSet(false)
 
@@ -39,6 +41,9 @@ export default function VideoMainView({janusConnect, subscribeTo}) {
               ptype: "publisher",
               display: myUsername
             };
+
+            myInfoStateSet(Object.assign(myInfoState, {sfuId: sfuTest.id}));
+            emitInfo(myInfoState)
 
             sfuTest.send({ message: register });
           },
@@ -217,6 +222,23 @@ export default function VideoMainView({janusConnect, subscribeTo}) {
 
             let stream = localTracks[trackId];
 
+            if (track.kind === 'video') {
+              myInfoStateSet(Object.assign(myInfoState, {
+                trackVideoId: trackId,
+                trackKindVideo: track.kind,
+              }));
+              emitInfo(myInfoState)
+            }
+
+            if (track.kind === 'audio') {
+              myInfoStateSet(Object.assign(myInfoState, {
+                trackAudioId: trackId,
+                trackKindAudio: track.kind,
+              }));
+              emitInfo(myInfoState)
+            }
+
+
             if (stream) { return; }
 
             if (track.kind === "audio") {
@@ -244,5 +266,5 @@ export default function VideoMainView({janusConnect, subscribeTo}) {
     }
   }, [janusConnect])
 
-  return <VideoPlayer srcObject={mediaState} />
+  return <VideoPlayer cssClass="w-full h-full object-cover" srcObject={mediaState} />
 }
