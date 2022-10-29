@@ -2,8 +2,11 @@ import {useEffect, useState} from "react";
 import Janus from "@/utils/libs/janus";
 import getQueryStringValue from "@/utils/common/getQueryStringValue";
 import DisplaySubViewVideo from "@/components/pages/video/displaySubViewvideo";
+import {onValue} from "firebase/database";
+import janusCtPlugin from "@/constants/janusCtPlugin";
+import pType from "@/constants/pType";
 
-export default function MainLayoutSubItem({janusConnect, sources, myPvtId}) {
+export default function MainLayoutSubItem({janusConnect, sources, myPvtId, subscribeTo, descText, db, dbRoomRef}) {
   const [ initState, initStateSet ] = useState(true)
   const [ mediaState, mediaStateSet ] = useState(null)
   const [ videoTracksState, videoTracksStateSet ] = useState([])
@@ -12,9 +15,10 @@ export default function MainLayoutSubItem({janusConnect, sources, myPvtId}) {
   const [ videoTracks, videoTracksSet ] = useState([])
   const [ removeStateUpdate, removeStateUpdateSet ] = useState(0)
 
-  useEffect(() => {
-    console.log('YYY', videoTracksState, videoTracks)
-  }, [removeStateUpdate])
+  // onValue(dbRoomRef, (snapshot) => {
+  //   const data = snapshot.val();
+  //   console.log('snapshot VAL', data)
+  // });
 
   useEffect(() => {
     let myRoom = 1234; // Demo room
@@ -31,7 +35,7 @@ export default function MainLayoutSubItem({janusConnect, sources, myPvtId}) {
 
       janusConnect.attach(
         {
-          plugin: "janus.plugin.videoroom",
+          plugin: janusCtPlugin.JANUS_PLUGIN_VIDEOROOM,
           opaqueId: opaqueId,
           success: function (pluginHandle) {
             remoteFeed = pluginHandle;
@@ -104,9 +108,9 @@ export default function MainLayoutSubItem({janusConnect, sources, myPvtId}) {
             }
 
             let subscribe = {
-              request: "join",
+              request: janusCtPlugin.REQUEST_JOIN,
               room: myRoom,
-              ptype: "subscriber",
+              ptype: pType.SUBSCRIBER,
               streams: subscription,
               use_msid: use_msid,
               private_id: myPvtId
@@ -128,6 +132,46 @@ export default function MainLayoutSubItem({janusConnect, sources, myPvtId}) {
           },
           onmessage: function (msg, jsep) {
             let event = msg["videoroom"];
+
+            if (msg["publishers"]) {
+              let list = msg["publishers"];
+              let sources = null;
+
+              for (let f in list) {
+                if (list[f]["dummy"]) { continue; }
+
+                let id = list[f]["id"];
+                let display = list[f]["display"];
+                let streams = list[f]["streams"];
+
+                for (let i in streams) {
+                  let stream = streams[i];
+
+                  stream["id"] = id;
+                  stream["display"] = display;
+                }
+
+                let slot = feedStreams[id] ? feedStreams[id].slot : null;
+                let remoteVideos = feedStreams[id] ? feedStreams[id].remoteVideos : 0;
+                feedStreams[id] = {
+                  id: id,
+                  display: display,
+                  streams: streams,
+                  slot: slot,
+                  remoteVideos: remoteVideos
+                }
+
+                if (!sources) {
+                  sources = [];
+                }
+
+                sources.push(streams);
+
+                if (sources) {
+                  subscribeTo(sources, myPvtId);
+                }
+              }
+            }
 
             if (msg["error"]) {
               //
@@ -195,11 +239,12 @@ export default function MainLayoutSubItem({janusConnect, sources, myPvtId}) {
             /**
              * Which publisher are we getting on this mid?
              */
-            // console.log('ON REMOTE TRACK', mid, track);
+            console.log('ON REMOTE TRACK', mid, track);
             const ownTrack = {
               mid: mid,
               track: track
             }
+
             let sub = subStreams[mid];
             let feed = feedStreams[sub.feed_id];
             let stream = null
@@ -245,7 +290,7 @@ export default function MainLayoutSubItem({janusConnect, sources, myPvtId}) {
                 feed.remoteVideos++;
                 stream = new MediaStream([ownTrack.track]);
                 remoteTracks[mid] = stream;
-                console.log('OWN TRACK', ownTrack)
+                // console.log('OWN TRACK', ownTrack)
 
                 mediaStateSet(stream)
                 videoTracks.push(stream);
@@ -277,5 +322,5 @@ export default function MainLayoutSubItem({janusConnect, sources, myPvtId}) {
     }
   }, [sources])
 
-  return <DisplaySubViewVideo videoTracks={videoTracks} removeStateUpdate={removeStateUpdate} />
+  return <DisplaySubViewVideo videoTracks={videoTracks} removeStateUpdate={removeStateUpdate} descText={descText} />
 }

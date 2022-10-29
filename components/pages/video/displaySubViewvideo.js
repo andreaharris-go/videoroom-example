@@ -6,7 +6,7 @@ import SvgShareScreenOff from "@/components/svg/svgShareScreenOff";
 import SvgThumbsUp from "@/components/svg/svgThumbsUp";
 import LabelLive from "@/components/common/labelLive";
 
-export default function DisplaySubViewVideo({videoTracks}){
+export default function DisplaySubViewVideo({videoTracks, descText}){
   return (
     <>
       {videoTracks.filter(v => v.getTracks()[0].kind === 'video').map(videoTrack => {
@@ -43,11 +43,11 @@ export default function DisplaySubViewVideo({videoTracks}){
 
                 <div className="px-2">
                   <div className="mt-4">
-                    <h2 className="font-medium text-base md:text-lg text-gray-800 line-clamp-1 text-amber-400">
-                      ID: [subscriber id]
+                    <h2 className="font-medium text-base md:text-lg text-gray-800 line-clamp-1">
+                      ID: {videoTrack.id}
                     </h2>
-                    <p className="mt-2 text-sm text-gray-800 line-clamp-1 text-amber-400">
-                      Server: [subscriber server]
+                    <p className="mt-2 text-sm text-gray-800 line-clamp-1">
+                      Server: {descText}
                     </p>
                   </div>
 
@@ -74,7 +74,7 @@ export default function DisplaySubViewVideo({videoTracks}){
                     <div className="">
                       <p className="inline-flex flex-col xl:flex-row xl:items-center text-gray-800">
                         <SvgCameraOn cssClass="inline-block w-5 h-5 xl:w-4 xl:h-4 mr-3 fill-current text-gray-800" />
-                        <span className="mt-2 xl:mt-0 text-amber-400">[subscriber video track ID]</span>
+                        <span className="mt-2 xl:mt-0">{videoTrack.id}</span>
                       </p>
                       <p className="inline-flex flex-col xl:flex-row xl:items-center text-gray-800">
                         <SvgSpeakerOn cssClass="inline-block w-5 h-5 xl:w-4 xl:h-4 mr-3 fill-current text-gray-800" />

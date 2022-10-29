@@ -1,6 +1,4 @@
-import {useEffect, useState} from "react";
-import Janus from "@/utils/libs/janus";
-import adapter from "webrtc-adapter";
+import {useContext, useEffect, useState} from "react";
 import VideoMainView from "@/components/pages/video/videoMainView";
 import MainLayoutSubItem from "@/components/pages/video/mainLayoutSubItem";
 import SvgSpeakerOn from "@/components/svg/svgSpeakerOn";
@@ -8,89 +6,63 @@ import SvgShareScreenOff from "@/components/svg/svgShareScreenOff";
 import SvgCameraOn from "@/components/svg/svgCameraOn";
 import SvgThumbsUp from "@/components/svg/svgThumbsUp";
 import LabelLive from "@/components/common/labelLive";
+import createNewJanus from "@/utils/libs/jaFunc/createNewJanus";
+import createJanusSession from "@/utils/libs/jaFunc/createJanusSession";
+import {RoomContext} from "@/contexts/RoomContext";
+import _ from "lodash";
+import roomCtAction from "@/constants/roomCtAction";
 
-export default function MainLayout({servers, clientInfo}) {
+export default function MainLayout({servers, serverSubscriber, clientInfo, db, dbRoomRef}) {
   const [ initState, initStateSet ] = useState(true)
-  const [ janusConnect, janusConnectSet ] = useState(null)
-
+  const [ janusConnect1, janusConnect1Set ] = useState(null)
+  const [ janusConnect2, janusConnect2Set ] = useState(null)
+  const { roomState, roomDispatch } = useContext(RoomContext);
 
   useEffect(() => {
     if (window && initState) {
       initStateSet(false)
 
-      const createNewJanus = async () => {
-        return new Promise((resolve, reject) => {
-          Janus.init({
-            debug: 'error',
-            callback: function () {
-              resolve({ status: 'success' })
-            },
-            error: function (error) {
-              reject({ status: 'error', msg: error })
-              console.log('[PUB_INIT][error]: ' + error)
-            },
-            destroyed: function () {
-              console.log('[PUB_INIT][destroyed]')
-              resolve({ status: 'destroyed' })
-            },
-            // eslint-disable-next-line react-hooks/rules-of-hooks
-            dependencies: Janus.useDefaultDependencies({ adapter }),
-          })
-        })
-      }
-
-      const createJanusSession = async () => {
-        let session
-
-        return new Promise((resolve, reject) => {
-          const config = {
-            server: servers,
-            success: function () {
-              resolve(session)
-            },
-            error: function (cause) {
-              console.log('[SESSION_INIT][error]: ' + cause)
-              reject(cause)
-            },
-            destroyed: function () {
-              console.log('[SESSION_INIT][destroyed]')
-            },
-          }
-
-          session = new Janus(config)
-        })
-      }
-
       return () => {
         createNewJanus()
-          .then(() => {
-            createJanusSession()
-              .then(session => {
-                janusConnectSet(session)
+          .then(() => createJanusSession(servers)
+            .then(session => {
+              roomDispatch({
+                type: roomCtAction.SET_SESSION_ATTACHED,
+                payload: {
+                  clientId: clientInfo.clientId,
+                  sessionId: session.getSessionId(),
+                  server: session.getServer(),
+                }
               })
-              .catch(console.error)
-          })
+              janusConnect1Set(session)
+            })
+            .catch(console.error))
+          .catch(console.error)
+
+        createNewJanus()
+          .then(() => createJanusSession(serverSubscriber)
+            .then(session => {
+              roomDispatch({
+                type: roomCtAction.SET_SESSION_ATTACHED,
+                payload: {
+                  clientId: clientInfo.clientId,
+                  sessionId: session.getSessionId(),
+                  server: session.getServer(),
+                }
+              })
+              janusConnect2Set(session)
+            })
+            .catch(console.error))
           .catch(console.error)
       }
     }
   }, [])
 
-  const [ subSources, subSourcesSet ] = useState([])
-  const [ myPvtIdState, myPvtIdStateSet ] = useState(null)
-  const [ janusSessionId, janusSessionIdSet ] = useState(null)
-  const [ videoTrackId, videoTrackIdSet ] = useState(null)
-  const [ audioTrackId, audioTrackIdSet ] = useState(null)
-  const [ joinedTime, joinedTimeSet ] = useState(0)
+  const [ subSources1, subSources1Set ] = useState([])
+  const [ myPvtIdState1, myPvtIdState1Set ] = useState(null)
 
-  const myInfoFromServer = (info) => {
-    if (info?.sfuId) janusSessionIdSet(info.sfuId)
-
-    if (info?.trackVideoId) videoTrackIdSet(info.trackVideoId)
-
-    if (info?.trackAudioId) audioTrackIdSet(info.trackAudioId)
-
-    if (!joinedTime) joinedTimeSet(new Date().valueOf())
-  }
+  const [ subSources2, subSources2Set ] = useState([])
+  const [ myPvtIdState2, myPvtIdState2Set ] = useState(null)
 
   return (
     <>
@@ -102,11 +74,19 @@ export default function MainLayout({servers, clientInfo}) {
                 <div className="transition-transform duration-500 transform ease-in-out hover:scale-110 w-full">
                   <div className="absolute inset-0 bg-black">
                     <VideoMainView
-                      janusConnect={janusConnect}
-                      emitInfo={myInfoFromServer}
+                      janusConnect={janusConnect1}
+                      clientInfo={clientInfo}
                       subscribeTo={(source, mypvtid) => {
-                        subSourcesSet(source)
-                        myPvtIdStateSet(mypvtid)
+                        subSources1Set(source)
+                        myPvtIdState1Set(mypvtid)
+                      }}
+                    />
+                    <VideoMainView
+                      janusConnect={janusConnect2}
+                      clientInfo={clientInfo}
+                      subscribeTo={(source, mypvtid) => {
+                        subSources2Set(source)
+                        myPvtIdState2Set(mypvtid)
                       }} />
                   </div>
                 </div>
@@ -134,7 +114,7 @@ export default function MainLayout({servers, clientInfo}) {
               <div className="px-2">
                 <div className="mt-4">
                   <h2 className="font-medium text-base md:text-lg text-gray-800 line-clamp-1">
-                    ID: {janusSessionId}
+                    ID: {_.get(roomState, 'myName')}
                   </h2>
                   <p className="mt-2 text-sm text-gray-800 line-clamp-1">
                     Server: {servers[0]}
@@ -164,11 +144,11 @@ export default function MainLayout({servers, clientInfo}) {
                   <div className="">
                     <p className="inline-flex flex-col xl:flex-row xl:items-center text-gray-800">
                       <SvgCameraOn cssClass="inline-block w-5 h-5 xl:w-4 xl:h-4 mr-3 fill-current text-gray-800" />
-                      <span className="mt-2 xl:mt-0">{videoTrackId || '-'}</span>
+                      <span className="mt-2 xl:mt-0">{'-'}</span>
                     </p>
                     <p className="inline-flex flex-col xl:flex-row xl:items-center text-gray-800">
                       <SvgSpeakerOn cssClass="inline-block w-5 h-5 xl:w-4 xl:h-4 mr-3 fill-current text-gray-800" />
-                      <span className="mt-2 xl:mt-0"><span className="mt-2 xl:mt-0">{audioTrackId || '-'}</span></span>
+                      <span className="mt-2 xl:mt-0"><span className="mt-2 xl:mt-0">{'-'}</span></span>
                     </p>
                   </div>
                 </div>
@@ -184,14 +164,40 @@ export default function MainLayout({servers, clientInfo}) {
 
                 <div className="flex justify-end">
                   <p className="inline-block font-semibold text-primary whitespace-nowrap leading-tight rounded-xl">
-                    <span className="text-gray-800 line-clamp-1">{joinedTime}</span>
+                    <span className="text-gray-800 line-clamp-1">-</span>
                   </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <MainLayoutSubItem janusConnect={janusConnect} sources={subSources} myPvtId={myPvtIdState} />
+        <MainLayoutSubItem
+          janusConnect={janusConnect1}
+          sources={subSources1}
+          myPvtId={myPvtIdState1}
+          subscribeTo={(source, mypvtid) => {
+            subSources1Set(source)
+            myPvtIdState1Set(mypvtid)
+          }}
+          descText={servers}
+          clientInfo={clientInfo}
+          db={db}
+          dbRoomRef={dbRoomRef}
+        />
+
+        <MainLayoutSubItem
+          janusConnect={janusConnect2}
+          sources={subSources2}
+          myPvtId={myPvtIdState2}
+          subscribeTo={(source, mypvtid) => {
+            subSources2Set(source)
+            myPvtIdState2Set(mypvtid)
+          }}
+          descText={serverSubscriber}
+          clientInfo={clientInfo}
+          db={db}
+          dbRoomRef={dbRoomRef}
+        />
       </div>
     </>
   )

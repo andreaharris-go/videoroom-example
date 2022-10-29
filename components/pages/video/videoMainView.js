@@ -1,17 +1,19 @@
 import VideoPlayer from "@/components/common/videoPlayer";
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import Janus from "@/utils/libs/janus";
 import publishOwnFeed from "@/utils/libs/jaFunc/publishOwnFeed";
 import getQueryStringValue from "@/utils/common/getQueryStringValue";
 import escapeXmlTags from "@/utils/common/escapeXmlTags";
+import janusCtPlugin from "@/constants/janusCtPlugin";
+import pType from "@/constants/pType";
 
-export default function VideoMainView({janusConnect, subscribeTo, emitInfo = () => {}}) {
+export default function VideoMainView({janusConnect, subscribeTo, clientInfo}) {
   const [ initState, initStateSet ] = useState(true)
   const [ mediaState, mediaStateSet ] = useState(null)
   const [ myInfoState, myInfoStateSet ] = useState({})
   const opaqueId = "videoRoomTest-"+Janus.randomString(12);
-  const username = 'S1_yohk'
-  const appDomain = process.env.APP_DOMAIN;
+  const username = clientInfo.clientRandId;
+  const appDomain = clientInfo.appDomain;
 
   useEffect(() => {
     let sfuTest = null;
@@ -19,7 +21,7 @@ export default function VideoMainView({janusConnect, subscribeTo, emitInfo = () 
     let myUsername = null;
     let myStream = null;
     let myPvtId = null;
-    let myRoom = 1234; // Demo room
+    let myRoom = +clientInfo.roomId;
     let feedStreams = {};
     let localTracks = {}, localVideos = 0;
     let acodec = (getQueryStringValue("acodec", appDomain) !== "" ? getQueryStringValue("acodec", appDomain) : null);
@@ -30,21 +32,19 @@ export default function VideoMainView({janusConnect, subscribeTo, emitInfo = () 
 
       janusConnect.attach(
         {
-          plugin: "janus.plugin.videoroom",
+          plugin: janusCtPlugin.JANUS_PLUGIN_VIDEOROOM,
           opaqueId: opaqueId,
           success: function(pluginHandle) {
             sfuTest = pluginHandle;
             myUsername = escapeXmlTags(username);
             let register = {
-              request: "join",
+              request: janusCtPlugin.REQUEST_JOIN,
               room: myRoom,
-              ptype: "publisher",
+              ptype: pType.PUBLISHER,
               display: myUsername
             };
 
             myInfoStateSet(Object.assign(myInfoState, {sfuId: sfuTest.id}));
-            emitInfo(myInfoState)
-
             sfuTest.send({ message: register });
           },
           error: function (error) {
@@ -227,7 +227,6 @@ export default function VideoMainView({janusConnect, subscribeTo, emitInfo = () 
                 trackVideoId: trackId,
                 trackKindVideo: track.kind,
               }));
-              emitInfo(myInfoState)
             }
 
             if (track.kind === 'audio') {
@@ -235,7 +234,6 @@ export default function VideoMainView({janusConnect, subscribeTo, emitInfo = () 
                 trackAudioId: trackId,
                 trackKindAudio: track.kind,
               }));
-              emitInfo(myInfoState)
             }
 
 
