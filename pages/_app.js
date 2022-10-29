@@ -1,8 +1,9 @@
-require("@/utils/firebase")
 import Head from 'next/head'
+require("@/utils/firebase")
 import '../styles/globals.css'
 import {useEffect, useState} from "react"
 import BrowserContext from "@/contexts/BrowserContext"
+import {RoomContextProvider} from "@/contexts/RoomContext";
 
 function useWindowSize() {
   const [windowSize, setWindowSize] = useState({
@@ -63,11 +64,13 @@ export default function _App({ Component, pageProps }) {
       scrollX: scrollX === undefined ? 0 : scrollX,
       scrollY: scrollY === undefined ? 0 : scrollY
     }}>
-      <Head>
-        <meta name="viewport" content="width=device-width, initial-scale=1"/>
-        <title />
-      </Head>
-      <Component {...pageProps} />
+      <RoomContextProvider>
+        <Head>
+          <meta name="viewport" content="width=device-width, initial-scale=1"/>
+          <title />
+        </Head>
+        <Component {...pageProps} />
+      </RoomContextProvider>
     </BrowserContext.Provider>
   )
 }

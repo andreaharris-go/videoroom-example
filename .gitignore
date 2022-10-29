@@ -122,3 +122,4 @@ build/
 
 # vercel
 .vercel
+yarn.lock

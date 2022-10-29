@@ -1,42 +1,52 @@
 import Head from "next/head";
+import { useContext, useEffect } from "react";
 import MainLayout from "@/components/pages/video/mainLayout";
-const Janus = require('../utils/libs/janus');
+import { getDatabase, ref } from "firebase/database";
+import { RoomContext } from "@/contexts/RoomContext";
+import roomCtAction from "@/constants/roomCtAction";
+import TopHeader from "@/components/pages/video/topHeader";
+import homeGetServerSideProps from "@/utils/server/homeGetServerSideProps";
 
-export async function getServerSideProps({req}) {
-  const forwarded = req.headers['x-forwarded-for'];
-  const browser = req.headers['sec-ch-ua'];
-  const userAgent = req.headers['user-agent'];
-  const platform = req.headers['sec-ch-ua-platform'];
-  const ip = typeof forwarded === 'string' ? forwarded.split(/, /)[0] : req.socket.remoteAddress;
+const db = getDatabase();
+const dbRoomRef = ref(db, `videoroom/${process.env.FIX_ROOM_ID}`);
 
-  return {
-    props: {
-      servers: [process.env.JANUS_DEFAULT_SERVER],
-      clientInfo: {
-        ip: ip || '',
-        browser: browser || '',
-        userAgent: userAgent || '',
-        platform: platform || ''
+export const getServerSideProps = async (ctx) => homeGetServerSideProps(ctx)
+
+export default function Home({ servers, clientInfo, serverSubscriber }) {
+  /**
+   * Prepare state and function.
+   */
+  const { roomState, roomDispatch } = useContext(RoomContext);
+  const dpPushClientPayload = {type: roomCtAction.PUSH_CLIENTS, payload: { clientId: clientInfo.clientId }}
+  const dpSetMyNamePayload = {type: roomCtAction.SET_MY_NAME, payload: { myName: clientInfo.clientRandId }}
+  const dpPushClient = (dpPushClientPayload) => roomDispatch(dpPushClientPayload)
+  const dpSetMyName = (dpSetMyNamePayload) => roomDispatch(dpSetMyNamePayload)
+
+  /**
+   * Client side do.
+   */
+  useEffect(() => {
+    return () => {
+      if (!roomState.clients.includes(clientInfo.clientRandId)) {
+        dpPushClient(dpPushClientPayload)
+        dpSetMyName(dpSetMyNamePayload)
       }
-    },
-  }
-}
+    };
+  }, [clientInfo]);
 
-export default function Home({ servers, clientInfo }) {
   return (
     <>
       <Head>
         <title>Demo JANUS (multistream) with ReactJS</title>
       </Head>
-      <div className="py-2">
-        <div className="container m-auto px-6 text-gray-600 md:px-12 xl:px-6">
-          <div className="mb-4 space-y-2 text-center">
-            <span className="block w-max mx-auto px-3 py-1.5 border border-green-200 rounded-full bg-green-100 text-green-600">DEMO</span>
-            <h2 className="text-2xl text-cyan-900 font-bold md:text-4xl">Demo JANUS (multistream) with ReactJS</h2>
-          </div>
-        </div>
-      </div>
-      <MainLayout servers={servers} clientInfo={clientInfo} />
+      <TopHeader />
+      <MainLayout
+        servers={servers}
+        serverSubscriber={serverSubscriber}
+        clientInfo={clientInfo}
+        db={db}
+        dbRoomRef={dbRoomRef}
+      />
     </>
   )
 }
