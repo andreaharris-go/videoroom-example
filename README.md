@@ -1,5 +1,10 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
+
+<picture>
+  <a href="https://www.buymeacoffee.com/duckdev84" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
+</picture>
+
 ## Demo Architecture
 ![Screenshot](doc/image/img-1.jpg)
 
