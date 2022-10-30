@@ -34,7 +34,7 @@ async function homeGetServerSideProps(ctx) {
         browser: browser || '',
         userAgent: userAgent || '',
         platform: platform || '',
-        myName: clientRandId || '',
+        myName: ctx.query?.name || clientRandId,
         clientId: clientId || '',
         roomId: process.env.FIX_ROOM_ID,
         appDomain: process.env.APP_DOMAIN,

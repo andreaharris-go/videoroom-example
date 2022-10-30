@@ -1,5 +1,4 @@
 import VideoPlayer from "@/components/common/videoPlayer";
-import VideoMainView from "@/components/pages/video/videoMainView";
 import SvgSpeakerOn from "@/components/svg/svgSpeakerOn";
 import SvgCameraOn from "@/components/svg/svgCameraOn";
 import SvgShareScreenOff from "@/components/svg/svgShareScreenOff";

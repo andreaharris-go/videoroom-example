@@ -6,7 +6,7 @@ import {onValue} from "firebase/database";
 import janusCtPlugin from "@/constants/janusCtPlugin";
 import pType from "@/constants/pType";
 
-export default function MainLayoutSubItem({janusConnect, sources, myPvtId, subscribeTo, descText, db, dbRoomRef}) {
+export default function VideoRemoteView({janusConnect, sources, myPvtId, subscribeTo, descText, clientInfo, db, dbRoomRef}) {
   const [ initState, initStateSet ] = useState(true)
   const [ mediaState, mediaStateSet ] = useState(null)
   const [ videoTracksState, videoTracksStateSet ] = useState([])
@@ -14,6 +14,7 @@ export default function MainLayoutSubItem({janusConnect, sources, myPvtId, subsc
   const appDomain = process.env.APP_DOMAIN;
   const [ videoTracks, videoTracksSet ] = useState([])
   const [ removeStateUpdate, removeStateUpdateSet ] = useState(0)
+  const myRoom = +clientInfo.roomId
 
   // onValue(dbRoomRef, (snapshot) => {
   //   const data = snapshot.val();
@@ -21,7 +22,6 @@ export default function MainLayoutSubItem({janusConnect, sources, myPvtId, subsc
   // });
 
   useEffect(() => {
-    let myRoom = 1234; // Demo room
     let remoteFeed = null;
     let feeds = {}, feedStreams = {}, subStreams = {}, slots = {}, mids = {}, subscriptions = {};
     let remoteTracks = {};
@@ -239,11 +239,12 @@ export default function MainLayoutSubItem({janusConnect, sources, myPvtId, subsc
             /**
              * Which publisher are we getting on this mid?
              */
-            console.log('ON REMOTE TRACK', mid, track);
             const ownTrack = {
               mid: mid,
               track: track
             }
+
+            // console.log('ownTrack, subStreams', ownTrack, subStreams)
 
             let sub = subStreams[mid];
             let feed = feedStreams[sub.feed_id];

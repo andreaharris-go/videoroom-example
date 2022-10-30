@@ -1,19 +1,35 @@
 import VideoPlayer from "@/components/common/videoPlayer";
-import { useEffect, useState } from "react";
+import {useContext, useEffect, useState} from "react";
 import Janus from "@/utils/libs/janus";
 import publishOwnFeed from "@/utils/libs/jaFunc/publishOwnFeed";
 import getQueryStringValue from "@/utils/common/getQueryStringValue";
 import escapeXmlTags from "@/utils/common/escapeXmlTags";
 import janusCtPlugin from "@/constants/janusCtPlugin";
 import pType from "@/constants/pType";
+import {RoomContext} from "@/contexts/RoomContext";
+import {onValue, set, ref} from "firebase/database";
 
-export default function VideoMainView({janusConnect, subscribeTo, clientInfo}) {
+export default function VideoLocalView({janusConnect, subscribeTo, clientInfo, db, dbRoomRef}) {
   const [ initState, initStateSet ] = useState(true)
   const [ mediaState, mediaStateSet ] = useState(null)
   const [ myInfoState, myInfoStateSet ] = useState({})
+  const { roomState, roomDispatch } = useContext(RoomContext);
   const opaqueId = "videoRoomTest-"+Janus.randomString(12);
   const username = clientInfo.clientRandId;
   const appDomain = clientInfo.appDomain;
+
+  onValue(dbRoomRef, (snapshot) => {
+    const data = snapshot.val();
+
+    if (!data && roomState?.sessions?.length > 0) {
+      set(ref(db, `videoroom/${clientInfo.roomId}/${roomState.myName}`), {
+        clientName: roomState.myName,
+        clientId: roomState.clientId,
+        sessionId : roomState.sessionId,
+        sessions : roomState.sessions
+      }).then(() => {}).catch(console.error)
+    }
+  });
 
   useEffect(() => {
     let sfuTest = null;
