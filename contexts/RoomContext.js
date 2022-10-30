@@ -5,10 +5,10 @@ const RoomContext = createContext();
 
 const initialState = {
   myName: '',
-  clients: [],
   clientId: '',
+  sessionId: 0,
   sessions: [],
-  sessionId: 0
+  clients: [],
 };
 
 const reducer = (state, action) => {
@@ -19,7 +19,6 @@ const reducer = (state, action) => {
     case roomCtAction.PUSH_CLIENTS:
       return {
         ...state,
-        clients: [...state.clients, action.payload.clientId],
         clientId: action.payload.clientId,
       };
 

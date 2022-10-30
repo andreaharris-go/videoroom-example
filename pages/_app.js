@@ -4,6 +4,7 @@ import '../styles/globals.css'
 import {useEffect, useState} from "react"
 import BrowserContext from "@/contexts/BrowserContext"
 import {RoomContextProvider} from "@/contexts/RoomContext";
+import {RoomGlobalContextProvider} from "@/contexts/RoomGlobalContext";
 
 function useWindowSize() {
   const [windowSize, setWindowSize] = useState({
@@ -64,13 +65,15 @@ export default function _App({ Component, pageProps }) {
       scrollX: scrollX === undefined ? 0 : scrollX,
       scrollY: scrollY === undefined ? 0 : scrollY
     }}>
-      <RoomContextProvider>
-        <Head>
-          <meta name="viewport" content="width=device-width, initial-scale=1"/>
-          <title />
-        </Head>
-        <Component {...pageProps} />
-      </RoomContextProvider>
+      <RoomGlobalContextProvider>
+        <RoomContextProvider>
+          <Head>
+            <meta name="viewport" content="width=device-width, initial-scale=1"/>
+            <title />
+          </Head>
+          <Component {...pageProps} />
+        </RoomContextProvider>
+      </RoomGlobalContextProvider>
     </BrowserContext.Provider>
   )
 }
