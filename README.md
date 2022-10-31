@@ -2,6 +2,7 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 # Demo server is unavailable
 The solution consumes a budget of around 100 US/month. It was too expensiveeeeee.
+
 <picture>
   <a href="https://www.buymeacoffee.com/duckdev84" target="_blank"><img src="doc/image/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
 </picture>
@@ -25,6 +26,9 @@ npm run dev:mac
 
 ## Result
 ![Screenshot](doc/image/img-2.jpg)
+
+## Component diagram
+![Screenshot](doc/image/videoroom-example-1.jpg)
 
 ## ---
 Open [http://localhost:3072](http://localhost:3072) with your browser to see the result.
