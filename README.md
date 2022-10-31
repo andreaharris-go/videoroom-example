@@ -1,6 +1,7 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-
+# Demo server is unavailable
+The solution consumes a budget of around 100 US/month. It was too expensiveeeeee.
 <picture>
   <a href="https://www.buymeacoffee.com/duckdev84" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
 </picture>
