@@ -5,20 +5,79 @@ import {getDatabase, onValue, ref} from "firebase/database";
 import { RoomContext } from "@/contexts/RoomContext";
 import roomCtAction from "@/constants/roomCtAction";
 import TopHeader from "@/components/pages/video/topHeader";
-import homeGetServerSideProps from "@/utils/server/homeGetServerSideProps";
 import {RoomGlobalContext} from "@/contexts/RoomGlobalContext";
 import roomGlobalCtAction from "@/constants/roomGlobalCtAction";
+import {withIronSessionSsr} from "iron-session/next";
+import * as reqHeader from "@/constants/reqHeader";
+import makeRandomStr from "@/utils/common/makeRandomStr";
+import uuid from "react-uuid";
+import {sessionOptions} from "@/utils/auth/session";
+import {UserContext} from "@/contexts/UserContext";
 
 const db = getDatabase();
 const dbRoomRef = ref(db, `videoroom/${process.env.FIX_ROOM_ID}`);
 
-export const getServerSideProps = async (ctx) => homeGetServerSideProps(ctx)
+export const getServerSideProps = withIronSessionSsr(async function (ctx) {
+  const browser = ctx.req.headers[reqHeader.BROWSER_UA];
+  const userAgent = ctx.req.headers[reqHeader.USER_AGENT];
+  const platform = ctx.req.headers[reqHeader.PLATFORM_UA];
+  const forwarded = ctx.req.headers[reqHeader.CLIENT_IP_FORWARDED];
+  const ip = typeof forwarded === 'string' ? forwarded.split(/, /)[0] : ctx.req.socket.remoteAddress;
+  const clientRandId = ctx.query?.name || makeRandomStr(9);
+  const clientId = uuid();
+  const user = ctx.req.session.user;
+  let server;
+  let subServer;
 
-export default function Home({ servers, clientInfo, serverSubscriber }) {
+  if (user === undefined) {
+    ctx.res.setHeader("location", "/sign-in");
+    ctx.res.statusCode = 302;
+    ctx.res.end();
+
+    return {
+      props: {
+        user: { isLoggedIn: false },
+      },
+    };
+  }
+
+  switch (ctx.query?.s) {
+    case '2':
+      server = process.env.JANUS_SECOND_SERVER;
+      subServer = process.env.JANUS_DEFAULT_SERVER;
+      break;
+    default:
+      server = process.env.JANUS_DEFAULT_SERVER;
+      subServer = process.env.JANUS_SECOND_SERVER;
+      break;
+  }
+
+  return {
+    props: {
+      user: ctx.req.session.user,
+      servers: [server],
+      serverSubscriber: [subServer],
+      clientInfo: {
+        clientRandId: clientRandId,
+        ip: ip || '',
+        browser: browser || '',
+        userAgent: userAgent || '',
+        platform: platform || '',
+        myName: ctx.query?.name || clientRandId,
+        clientId: clientId || '',
+        roomId: process.env.FIX_ROOM_ID,
+        appDomain: process.env.APP_DOMAIN,
+      }
+    },
+  }
+}, sessionOptions);
+
+export default function Home({ user, servers, clientInfo, serverSubscriber }) {
   /**
    * Prepare state and function.
    */
   const { roomState, roomDispatch } = useContext(RoomContext);
+  const { userState, userDispatch } = useContext(UserContext);
   const { roomGlobalState, roomGlobalDispatch } = useContext(RoomGlobalContext);
   const dpPushClientPayload = {type: roomCtAction.PUSH_CLIENTS, payload: { clientId: clientInfo.clientId }}
   const dpSetMyNamePayload = {type: roomCtAction.SET_MY_NAME, payload: { myName: clientInfo.clientRandId }}
@@ -36,6 +95,22 @@ export default function Home({ servers, clientInfo, serverSubscriber }) {
       }
     };
   }, [clientInfo]);
+
+  useEffect(() => {
+    if (user) {
+      return () => {
+        userDispatch({
+          type: 'set-user',
+          payload: {
+            uid: user.uid,
+            displayName: user.displayName,
+            imageUrl: user.imageUrl,
+          }
+        })
+      };
+    }
+  }, [user]);
+
 
   useEffect(() => {
     if (!roomGlobalState.roomId) {
