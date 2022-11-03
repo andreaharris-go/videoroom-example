@@ -27,7 +27,7 @@ npm run dev:mac
 ## Result
 ![Screenshot](doc/image/img-2.jpg)
 
-## Component diagram
+## Components hierarchy
 ![Screenshot](doc/image/videoroom-example-1.jpg)
 
 ## ---

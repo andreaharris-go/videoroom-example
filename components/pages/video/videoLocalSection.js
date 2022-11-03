@@ -7,6 +7,7 @@ import LabelLive from "@/components/common/labelLive";
 import _ from "lodash";
 import {useContext} from "react";
 import {RoomContext} from "@/contexts/RoomContext";
+import {UserContext} from "@/contexts/UserContext";
 
 export default function VideoLocalSection(
   {
@@ -22,6 +23,7 @@ export default function VideoLocalSection(
   }
   ) {
   const { roomState, roomDispatch } = useContext(RoomContext);
+  const { userState, userDispatch } = useContext(UserContext);
 
   return (
     <>
@@ -77,7 +79,7 @@ export default function VideoLocalSection(
             <div className="px-2">
               <div className="mt-4">
                 <h2 className="font-medium text-base md:text-lg text-gray-800 line-clamp-1">
-                  ID: {_.get(roomState, 'myName')}
+                  Aka: {_.get(userState, 'displayName')}
                 </h2>
                 <p className="mt-2 text-sm text-gray-800 line-clamp-1">
                   Server: -
