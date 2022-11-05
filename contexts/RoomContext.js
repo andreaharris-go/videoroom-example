@@ -4,11 +4,12 @@ import roomCtAction from "@/constants/roomCtAction";
 const RoomContext = createContext();
 
 const initialState = {
-  myName: '',
+  displayName: '',
   clientId: '',
   sessionId: 0,
   sessions: [],
   clients: [],
+  uid: '',
 };
 
 const reducer = (state, action) => {
@@ -25,7 +26,7 @@ const reducer = (state, action) => {
     case roomCtAction.SET_MY_NAME:
       return {
         ...state,
-        myName: action.payload.myName
+        displayName: action.payload.displayName
       };
 
     case roomCtAction.SET_SESSION_ATTACHED:
@@ -37,6 +38,7 @@ const reducer = (state, action) => {
           ...state,
           sessions: [...state.sessions, ...[{
             clientId: action.payload.clientId,
+            uid: action.payload.uid,
             sessionId: sessionId,
             server: action.payload.server,
           }]],

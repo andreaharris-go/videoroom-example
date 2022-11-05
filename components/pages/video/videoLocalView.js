@@ -8,22 +8,24 @@ import janusCtPlugin from "@/constants/janusCtPlugin";
 import pType from "@/constants/pType";
 import {RoomContext} from "@/contexts/RoomContext";
 import {onValue, set, ref} from "firebase/database";
+import {UserContext} from "@/contexts/UserContext";
 
-export default function VideoLocalView({janusConnect, subscribeTo, clientInfo, db, dbRoomRef}) {
+export default function VideoLocalView({janusConnect, sw, subscribeTo, clientInfo, db, dbRoomRef, currentUser, nameQuery}) {
   const [ initState, initStateSet ] = useState(true)
   const [ mediaState, mediaStateSet ] = useState(null)
   const [ myInfoState, myInfoStateSet ] = useState({})
   const { roomState, roomDispatch } = useContext(RoomContext);
+  const { userState, userDispatch } = useContext(UserContext);
   const opaqueId = "videoRoomTest-"+Janus.randomString(12);
-  const username = clientInfo.clientRandId;
+  const username = nameQuery ? `${currentUser.displayName}${nameQuery}` : currentUser.displayName;
   const appDomain = clientInfo.appDomain;
 
   onValue(dbRoomRef, (snapshot) => {
     const data = snapshot.val();
 
     if (!data && roomState?.sessions?.length > 0) {
-      set(ref(db, `videoroom/${clientInfo.roomId}/${roomState.myName}`), {
-        clientName: roomState.myName,
+      set(ref(db, `videoroom/${clientInfo.roomId}/${userState.uid}`), {
+        clientName: userState.displayName,
         clientId: roomState.clientId,
         sessionId : roomState.sessionId,
         sessions : roomState.sessions

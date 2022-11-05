@@ -2,11 +2,10 @@ import {useEffect, useState} from "react";
 import Janus from "@/utils/libs/janus";
 import getQueryStringValue from "@/utils/common/getQueryStringValue";
 import DisplaySubViewVideo from "@/components/pages/video/displaySubViewvideo";
-import {onValue} from "firebase/database";
 import janusCtPlugin from "@/constants/janusCtPlugin";
 import pType from "@/constants/pType";
 
-export default function VideoRemoteView({janusConnect, sources, myPvtId, subscribeTo, descText, clientInfo, db, dbRoomRef}) {
+export default function VideoRemoteView({janusConnect, sw, sources, myPvtId, subscribeTo, descText, clientInfo, db, dbRoomRef}) {
   const [ initState, initStateSet ] = useState(true)
   const [ mediaState, mediaStateSet ] = useState(null)
   const [ videoTracksState, videoTracksStateSet ] = useState([])
@@ -15,11 +14,6 @@ export default function VideoRemoteView({janusConnect, sources, myPvtId, subscri
   const [ videoTracks, videoTracksSet ] = useState([])
   const [ removeStateUpdate, removeStateUpdateSet ] = useState(0)
   const myRoom = +clientInfo.roomId
-
-  // onValue(dbRoomRef, (snapshot) => {
-  //   const data = snapshot.val();
-  //   console.log('snapshot VAL', data)
-  // });
 
   useEffect(() => {
     let remoteFeed = null;

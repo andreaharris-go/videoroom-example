@@ -15,6 +15,7 @@ export default function VideoRemoteSection(
     subscribeTo2
   }
 ) {
+
   return (
     <>
       <VideoRemoteView
@@ -27,6 +28,7 @@ export default function VideoRemoteSection(
         clientInfo={clientInfo}
         db={db}
         dbRoomRef={dbRoomRef}
+        sw={`sw1`}
       />
 
       <VideoRemoteView
@@ -39,6 +41,7 @@ export default function VideoRemoteSection(
         clientInfo={clientInfo}
         db={db}
         dbRoomRef={dbRoomRef}
+        sw={`sw2`}
       />
     </>
   )

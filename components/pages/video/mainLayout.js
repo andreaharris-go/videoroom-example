@@ -5,8 +5,9 @@ import {RoomContext} from "@/contexts/RoomContext";
 import roomCtAction from "@/constants/roomCtAction";
 import VideoLocalSection from "@/components/pages/video/videoLocalSection";
 import VideoRemoteSection from "@/components/pages/video/videoRemoteSection";
+import {ref, set} from "firebase/database";
 
-export default function MainLayout({servers, serverSubscriber, clientInfo, db, dbRoomRef}) {
+export default function MainLayout({servers, serverSubscriber, clientInfo, db, dbRoomRef, currentUser, nameQuery}) {
   const { roomState, roomDispatch } = useContext(RoomContext);
   const [ initState, initStateSet ] = useState(true)
   const [ janusConnect1, janusConnect1Set ] = useState(null)
@@ -28,10 +29,23 @@ export default function MainLayout({servers, serverSubscriber, clientInfo, db, d
                 type: roomCtAction.SET_SESSION_ATTACHED,
                 payload: {
                   clientId: clientInfo.clientId,
+                  uid: currentUser.uid,
                   sessionId: session.getSessionId(),
                   server: session.getServer(),
                 }
               })
+
+              if (currentUser.uid) {
+                set(ref(db, `videoroom/${clientInfo.roomId}/sw1/${currentUser.uid}`), {
+                  uid: currentUser.uid,
+                  clientName: currentUser.displayName,
+                  clientId: roomState.clientId,
+                  sessionId : session.getSessionId(),
+                  server: session.getServer(),
+                  timestamp: new Date().valueOf(),
+                }).then(() => {}).catch(console.error)
+              }
+
               janusConnect1Set(session)
             })
             .catch(console.error))
@@ -44,10 +58,23 @@ export default function MainLayout({servers, serverSubscriber, clientInfo, db, d
                 type: roomCtAction.SET_SESSION_ATTACHED,
                 payload: {
                   clientId: clientInfo.clientId,
+                  uid: currentUser.uid,
                   sessionId: session.getSessionId(),
                   server: session.getServer(),
                 }
               })
+
+              if (currentUser.uid) {
+                set(ref(db, `videoroom/${clientInfo.roomId}/sw2/${currentUser.uid}`), {
+                  uid: currentUser.uid,
+                  clientName: currentUser.displayName,
+                  clientId: roomState.clientId,
+                  sessionId : session.getSessionId(),
+                  server: session.getServer(),
+                  timestamp: new Date().valueOf(),
+                }).then(() => {}).catch(console.error)
+              }
+
               janusConnect2Set(session)
             })
             .catch(console.error))
@@ -69,6 +96,8 @@ export default function MainLayout({servers, serverSubscriber, clientInfo, db, d
           myPvtIdState2Set={myPvtIdState2Set}
           db={db}
           dbRoomRef={dbRoomRef}
+          currentUser={currentUser}
+          nameQuery={nameQuery}
         />
         <VideoRemoteSection
           janusConnect1={janusConnect1}
@@ -88,6 +117,7 @@ export default function MainLayout({servers, serverSubscriber, clientInfo, db, d
             subSources2Set(source)
             myPvtIdState2Set(mypvtid)
           }}
+          nameQuery={nameQuery}
         />
       </div>
     </>
