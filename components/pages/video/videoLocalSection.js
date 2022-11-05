@@ -6,7 +6,6 @@ import SvgThumbsUp from "@/components/svg/svgThumbsUp";
 import LabelLive from "@/components/common/labelLive";
 import _ from "lodash";
 import {useContext} from "react";
-import {RoomContext} from "@/contexts/RoomContext";
 import {UserContext} from "@/contexts/UserContext";
 
 export default function VideoLocalSection(
@@ -19,10 +18,11 @@ export default function VideoLocalSection(
     myPvtIdState2Set,
     clientInfo,
     db,
-    dbRoomRef
+    dbRoomRef,
+    currentUser,
+    nameQuery,
   }
   ) {
-  const { roomState, roomDispatch } = useContext(RoomContext);
   const { userState, userDispatch } = useContext(UserContext);
 
   return (
@@ -42,6 +42,9 @@ export default function VideoLocalSection(
                     }}
                     db={db}
                     dbRoomRef={dbRoomRef}
+                    sw={`sw1`}
+                    currentUser={currentUser}
+                    nameQuery={nameQuery}
                   />
                   <VideoLocalView
                     janusConnect={janusConnect2}
@@ -52,6 +55,9 @@ export default function VideoLocalSection(
                     }}
                     db={db}
                     dbRoomRef={dbRoomRef}
+                    sw={`sw2`}
+                    currentUser={currentUser}
+                    nameQuery={nameQuery}
                   />
                 </div>
               </div>

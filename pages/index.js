@@ -57,13 +57,13 @@ export const getServerSideProps = withIronSessionSsr(async function (ctx) {
       user: ctx.req.session.user,
       servers: [server],
       serverSubscriber: [subServer],
+      nameQuery: ctx.query?.name || '',
       clientInfo: {
         clientRandId: clientRandId,
         ip: ip || '',
         browser: browser || '',
         userAgent: userAgent || '',
         platform: platform || '',
-        myName: ctx.query?.name || clientRandId,
         clientId: clientId || '',
         roomId: process.env.FIX_ROOM_ID,
         appDomain: process.env.APP_DOMAIN,
@@ -72,7 +72,7 @@ export const getServerSideProps = withIronSessionSsr(async function (ctx) {
   }
 }, sessionOptions);
 
-export default function Home({ user, servers, clientInfo, serverSubscriber }) {
+export default function Home({ user, servers, clientInfo, serverSubscriber, nameQuery }) {
   /**
    * Prepare state and function.
    */
@@ -80,7 +80,7 @@ export default function Home({ user, servers, clientInfo, serverSubscriber }) {
   const { userState, userDispatch } = useContext(UserContext);
   const { roomGlobalState, roomGlobalDispatch } = useContext(RoomGlobalContext);
   const dpPushClientPayload = {type: roomCtAction.PUSH_CLIENTS, payload: { clientId: clientInfo.clientId }}
-  const dpSetMyNamePayload = {type: roomCtAction.SET_MY_NAME, payload: { myName: clientInfo.clientRandId }}
+  const dpSetMyNamePayload = {type: roomCtAction.SET_MY_NAME, payload: { displayName: user.displayName }}
   const dpPushClient = (dpPushClientPayload) => roomDispatch(dpPushClientPayload)
   const dpSetMyName = (dpSetMyNamePayload) => roomDispatch(dpSetMyNamePayload)
 
@@ -98,18 +98,16 @@ export default function Home({ user, servers, clientInfo, serverSubscriber }) {
 
   useEffect(() => {
     if (user) {
-      return () => {
-        userDispatch({
-          type: 'set-user',
-          payload: {
-            uid: user.uid,
-            displayName: user.displayName,
-            imageUrl: user.imageUrl,
-          }
-        })
-      };
+      userDispatch({
+        type: 'set-user',
+        payload: {
+          uid: user.uid,
+          displayName: user.displayName,
+          imageUrl: user.imageUrl,
+        }
+      })
     }
-  }, [user]);
+  }, []);
 
 
   useEffect(() => {
@@ -158,6 +156,8 @@ export default function Home({ user, servers, clientInfo, serverSubscriber }) {
         clientInfo={clientInfo}
         db={db}
         dbRoomRef={dbRoomRef}
+        currentUser={user}
+        nameQuery={nameQuery}
       />
     </>
   )
